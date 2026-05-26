@@ -1,4 +1,5 @@
 from aiogram import Router
+from aiogram.filters import Command
 from aiogram.types import Message, BufferedInputFile
 from models.transaction import TransactionModel
 from services.groq_service import ParsedTextResponse
@@ -11,7 +12,6 @@ ANALYTICS_TITLES = {
     "days": "Витрати по днях",
     "income_expense": "Дохід vs Витрати",
 }
-
 
 @router.message()
 async def transaction_handler(message: Message, user, services):
