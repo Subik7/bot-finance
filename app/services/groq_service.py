@@ -1,7 +1,10 @@
 import json
+import logging
 from dataclasses import dataclass
 
 from groq import AsyncGroq
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -68,17 +71,12 @@ TOOLS = [
                     },
                     "category_hint": {
                         "type": "string",
-                        "enum": [
-                            "food",
-                            "transport",
-                            "health",
-                            "shopping",
-                            "entertainment",
-                            "utilities",
-                            "rent",
-                            "other",
-                        ],
-                        "description": "Категорія витрати",
+                        "description": (
+                            "Transaction category. Use one of the available user categories. "
+                            "Default categories: food, transport, health, shopping, entertainment, utilities, rent, other. "
+                            "If a custom user category clearly fits, use it. "
+                            "If nothing fits, use other."
+                        ),
                     },
                     "description": {
                         "type": "string",
@@ -176,13 +174,32 @@ class GroqService:
     def __init__(self, api_key: str):
         self.client = AsyncGroq(api_key=api_key)
 
-    async def parse_message(self, text: str) -> ParseResult:
+    async def parse_message(self, text: str, categories: list[str]) -> ParseResult:
+        category_list = ", ".join(categories)
+        prompt_messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": (
+                    "Available user categories: "
+                    f"{category_list}. "
+                    "For create_transaction, choose category_hint only from this list. "
+                    "If the message clearly matches a default category, for example ATB or groceries, "
+                    "use the default category food. "
+                    "If an exact or obvious custom user category fits, use it. "
+                    "If nothing fits, use other."
+                ),
+            },
+            {"role": "user", "content": text},
+        ]
+        logger.info(
+            "Groq prompt messages: %s",
+            json.dumps(prompt_messages, ensure_ascii=False),
+        )
+
         response = await self.client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": text},
-            ],
+            messages=prompt_messages,
             tools=TOOLS,
             tool_choice="auto",
         )

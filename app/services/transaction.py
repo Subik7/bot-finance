@@ -1,3 +1,5 @@
+from matplotlib import text
+
 from models.transaction import TransactionModel
 from repositories.uow import UnitOfWork
 from services.analytics import AnalyticsService
@@ -27,7 +29,10 @@ class TransactionService:
         self.analytics_service = analytics_service
 
     async def handle_message(self, user_id: int, text: str):
-        parsed = await self.groq_service.parse_message(text)
+        categories = await self.category_service.get_all_for_user(user_id)
+        category_names = [category.name for category in categories]
+
+        parsed = await self.groq_service.parse_message(text, category_names)
 
         if isinstance(parsed, ParsedTextResponse):
             return parsed
