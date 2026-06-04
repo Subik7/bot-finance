@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import select
+from sqlalchemy import select, update
 from repositories.base import BaseRepository
 from models.transaction import TransactionModel
 
@@ -30,3 +30,20 @@ class TransactionRepository(BaseRepository[TransactionModel]):
             .limit(1)
         )
         return result.scalar_one_or_none()
+
+    async def move_category(
+        self,
+        user_id: int,
+        from_category_id: int,
+        to_category_id: int,
+    ) -> int:
+        result = await self.session.execute(
+            update(TransactionModel)
+            .where(
+                TransactionModel.user_id == user_id,
+                TransactionModel.category_id == from_category_id,
+            )
+            .values(category_id=to_category_id)
+        )
+        return result.rowcount or 0
+

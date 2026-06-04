@@ -50,3 +50,13 @@ class CategoryRepository(BaseRepository[CategoryModel]):
             )
         )
         return result.first() is not None
+
+    async def get_owned_by_name(self, user_id: int, name: str) -> CategoryModel | None:
+        result = await self.session.execute(
+            select(CategoryModel).where(
+                CategoryModel.user_id == user_id,
+                CategoryModel.name == name,
+            )
+        )
+        return result.scalar_one_or_none()
+

@@ -184,10 +184,14 @@ class GroqService:
                     "Available user categories: "
                     f"{category_list}. "
                     "For create_transaction, choose category_hint only from this list. "
-                    "If the message clearly matches a default category, for example ATB or groceries, "
-                    "use the default category food. "
-                    "If an exact or obvious custom user category fits, use it. "
-                    "If nothing fits, use other."
+                    "Default categories are useful, but custom user categories have priority over other. "
+                    "Choose a custom category when the item, service, merchant, or context semantically belongs to it, "
+                    "even if the category name is not written exactly in the user message. "
+                    "For example: if the user has category \u0430\u043b\u043a\u043e\u0433\u043e\u043b\u044c, then \u043f\u0438\u0432\u043e, \u0432\u0438\u043d\u043e, \u0442\u0435\u043a\u0456\u043b\u0430, \u0433\u043e\u0440\u0456\u043b\u043a\u0430 should use \u0430\u043b\u043a\u043e\u0433\u043e\u043b\u044c; "
+                    "if the user has category \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u0438, then MacBook, Lenovo laptop, laptop repair, laptop charger should use \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u0438; "
+                    "if the user has category \u0441\u043f\u043e\u0440\u0442, then gym, \u0442\u0440\u0435\u043d\u0443\u0432\u0430\u043d\u043d\u044f, \u0430\u0431\u043e\u043d\u0435\u043c\u0435\u043d\u0442 should use \u0441\u043f\u043e\u0440\u0442. "
+                    "If the message clearly matches a default category, for example ATB or groceries, use food. "
+                    "Use other only when no default or custom category fits."
                 ),
             },
             {"role": "user", "content": text},
