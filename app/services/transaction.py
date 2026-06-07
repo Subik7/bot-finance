@@ -1,5 +1,3 @@
-from matplotlib import text
-
 from models.transaction import TransactionModel
 from repositories.uow import UnitOfWork
 from services.analytics import AnalyticsService
@@ -50,6 +48,9 @@ class TransactionService:
             return await self._get_analytics(user_id, parsed)
 
         if isinstance(parsed, ParsedTransaction):
+            # Guard: reject if the original text has no digits — LLM hallucination
+            if not any(ch.isdigit() for ch in text):
+                return ParsedTextResponse(text="Не зрозумів. Вкажи суму, наприклад: «кава 80»")
             return await self._create_transaction(user_id, parsed)
 
     async def _create_transaction(
