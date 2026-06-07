@@ -15,6 +15,13 @@ class DeleteCategoryStates(StatesGroup):
     waiting_name = State()
 
 
+@router.message(Command("categories"))
+async def list_categories_command(message: Message, user, services):
+    cats = await services.category_service().get_all_for_user(user.id)
+    names = "\n".join(f"• {c.name}" for c in cats)
+    await message.answer(f"Твої категорії:\n{names}")
+
+
 @router.message(Command("add_category"))
 async def add_category_command(message: Message, state: FSMContext):
     await state.set_state(AddCategoryStates.waiting_name)

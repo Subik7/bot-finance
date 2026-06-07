@@ -5,6 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from db.session import AsyncSessionLocal, init_db
 from handlers import analytics, category, transaction
+from handlers import balance, delete
 from middlewares.db import DBSessionMiddleware
 from middlewares.services import ServiceMiddleware
 from middlewares.user import UserMiddleware
@@ -26,10 +27,12 @@ async def main():
     dp.update.middleware(ServiceMiddleware())
     dp.update.middleware(UserMiddleware())
 
-    # routers
+    # routers — команди реєструються перед catch-all
     dp.include_router(analytics.router)
     dp.include_router(category.router)
-    dp.include_router(transaction.router)
+    dp.include_router(balance.router)
+    dp.include_router(delete.router)
+    dp.include_router(transaction.router)  # catch-all — останній
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

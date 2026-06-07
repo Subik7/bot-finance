@@ -31,5 +31,4 @@ class ServiceFactory:
             uow=self._uow(),
             category_service=self.category_service(),
             groq_service=self._groq,
-            analytics_service=self.analytics_service(),
         )
