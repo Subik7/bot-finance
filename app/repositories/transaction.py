@@ -1,11 +1,36 @@
 from datetime import datetime
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from repositories.base import BaseRepository
 from models.transaction import TransactionModel
 
 
 class TransactionRepository(BaseRepository[TransactionModel]):
     model = TransactionModel
+
+    async def get_page(self, user_id: int, offset: int, limit: int) -> list[TransactionModel]:
+        result = await self.session.execute(
+            select(TransactionModel)
+            .where(TransactionModel.user_id == user_id)
+            .order_by(TransactionModel.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return result.scalars().all()
+
+    async def count(self, user_id: int) -> int:
+        result = await self.session.execute(
+            select(func.count()).where(TransactionModel.user_id == user_id)
+        )
+        return result.scalar_one()
+
+    async def get_by_id(self, tx_id: int, user_id: int) -> TransactionModel | None:
+        result = await self.session.execute(
+            select(TransactionModel).where(
+                TransactionModel.id == tx_id,
+                TransactionModel.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none()
 
     async def get_by_user(self, user_id: int) -> list[TransactionModel]:
         result = await self.session.execute(

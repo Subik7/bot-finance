@@ -37,6 +37,11 @@ class CategoryService:
         async with self.uow:
             return await self.uow.categories.get_by_user(user_id)
 
+    async def get_custom_for_user(self, user_id: int) -> list[CategoryModel]:
+        async with self.uow:
+            all_cats = await self.uow.categories.get_by_user(user_id)
+            return [c for c in all_cats if not c.is_system]
+
     async def delete_for_user(self, user_id: int, name: str) -> int:
         async with self.uow:
             category = await self.uow.categories.get_owned_by_name(user_id, name)
