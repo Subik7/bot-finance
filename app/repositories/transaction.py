@@ -38,13 +38,16 @@ class TransactionRepository(BaseRepository[TransactionModel]):
         )
         return result.scalars().all()
 
-    async def get_by_user_since(self, user_id: int, since: datetime) -> list[TransactionModel]:
-        result = await self.session.execute(
-            select(TransactionModel).where(
-                TransactionModel.user_id == user_id,
-                TransactionModel.created_at >= since
-            ).order_by(TransactionModel.created_at.asc())
+    async def get_by_user_since(
+        self, user_id: int, since: datetime, until: datetime | None = None
+    ) -> list[TransactionModel]:
+        q = select(TransactionModel).where(
+            TransactionModel.user_id == user_id,
+            TransactionModel.created_at >= since,
         )
+        if until is not None:
+            q = q.where(TransactionModel.created_at <= until)
+        result = await self.session.execute(q.order_by(TransactionModel.created_at.asc()))
         return result.scalars().all()
 
     async def get_last(self, user_id: int) -> TransactionModel | None:

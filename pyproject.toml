@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiogram>=3.27.0",
+    "aiogram-calendar>=0.6.0",
     "aiosqlite>=0.22.1",
     "groq>=1.2.0",
     "matplotlib>=3.10.8",
