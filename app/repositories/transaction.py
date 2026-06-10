@@ -59,6 +59,13 @@ class TransactionRepository(BaseRepository[TransactionModel]):
         )
         return result.scalar_one_or_none()
 
+    async def delete_all_by_user(self, user_id: int) -> int:
+        from sqlalchemy import delete as sa_delete
+        result = await self.session.execute(
+            sa_delete(TransactionModel).where(TransactionModel.user_id == user_id)
+        )
+        return result.rowcount or 0
+
     async def move_category(
         self,
         user_id: int,

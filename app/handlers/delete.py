@@ -13,6 +13,8 @@ router = Router()
 class DeleteStates(StatesGroup):
     browsing = State()
     confirming = State()
+    confirming_all = State()
+    confirming_all_final = State()
 
 
 def _format_tx(tx) -> str:
@@ -34,16 +36,20 @@ async def _build_list_keyboard(user_id: int, offset: int, uow):
         kb.button(text=_format_tx(tx), callback_data=f"del_pick:{tx.id}")
     kb.adjust(1)
 
-    nav = []
+    nav = InlineKeyboardBuilder()
     if offset > 0:
-        nav.append(("⬅️ Назад", f"del_page:{offset - PAGE_SIZE}"))
+        nav.button(text="⬅️ Назад", callback_data=f"del_page:{offset - PAGE_SIZE}")
     if offset + PAGE_SIZE < total:
-        nav.append(("➡️ Далі", f"del_page:{offset + PAGE_SIZE}"))
-    nav.append(("❌ Скасувати", "del_cancel"))
+        nav.button(text="➡️ Далі", callback_data=f"del_page:{offset + PAGE_SIZE}")
+    if offset > 0 or offset + PAGE_SIZE < total:
+        nav.adjust(2)
+        kb.attach(nav)
 
-    for text, data in nav:
-        kb.button(text=text, callback_data=data)
-    kb.adjust(1)
+    bottom = InlineKeyboardBuilder()
+    bottom.button(text="🗑 Видалити всі", callback_data="del_all")
+    bottom.button(text="❌ Скасувати", callback_data="del_cancel")
+    bottom.adjust(2)
+    kb.attach(bottom)
 
     return kb.as_markup(), txs, total
 
@@ -96,7 +102,6 @@ async def delete_pick(callback: CallbackQuery, state: FSMContext, user, services
     kb.button(text="❌ Скасувати", callback_data="del_cancel")
     kb.adjust(2)
 
-    sign = "+" if tx.amount > 0 else ""
     await state.set_state(DeleteStates.confirming)
     await callback.message.edit_text(
         f"Видалити цю транзакцію?\n\n"
@@ -130,7 +135,69 @@ async def delete_confirm(callback: CallbackQuery, state: FSMContext, user, servi
     await callback.answer()
 
 
-@router.callback_query(F.data == "del_cancel")
+# ── Видалення всіх: крок 1 ───────────────────────────────────────────────
+
+@router.callback_query(F.data == "del_all", DeleteStates.browsing)
+async def delete_all_step1(callback: CallbackQuery, state: FSMContext, user, services):
+    uow = services.transaction_service().uow
+    async with uow:
+        total = await uow.transactions.count(user.id)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text="⚠️ Так, видалити всі", callback_data="del_all_confirm")
+    kb.button(text="❌ Скасувати", callback_data="del_cancel")
+    kb.adjust(2)
+
+    await state.set_state(DeleteStates.confirming_all)
+    await callback.message.edit_text(
+        f"⚠️ Ви збираєтесь видалити всі {total} транзакцій.\n\n"
+        f"Це незворотня дія. Ви впевнені?",
+        reply_markup=kb.as_markup(),
+    )
+    await callback.answer()
+
+
+# ── Видалення всіх: крок 2 (фінальне підтвердження) ─────────────────────
+
+@router.callback_query(F.data == "del_all_confirm", DeleteStates.confirming_all)
+async def delete_all_step2(callback: CallbackQuery, state: FSMContext, user, services):
+    uow = services.transaction_service().uow
+    async with uow:
+        total = await uow.transactions.count(user.id)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🗑 Підтверджую, видалити все", callback_data="del_all_final")
+    kb.button(text="❌ Скасувати", callback_data="del_cancel")
+    kb.adjust(1)
+
+    await state.set_state(DeleteStates.confirming_all_final)
+    await callback.message.edit_text(
+        f"🚨 Остаточне підтвердження!\n\n"
+        f"Всі {total} транзакцій будуть видалені безповоротно.\n\n"
+        f"Натисніть «Підтверджую» для продовження.",
+        reply_markup=kb.as_markup(),
+    )
+    await callback.answer()
+
+
+# ── Видалення всіх: виконання ────────────────────────────────────────────
+
+@router.callback_query(F.data == "del_all_final", DeleteStates.confirming_all_final)
+async def delete_all_final(callback: CallbackQuery, state: FSMContext, user, services):
+    uow = services.transaction_service().uow
+    async with uow:
+        deleted = await uow.transactions.delete_all_by_user(user.id)
+
+    await state.clear()
+    await callback.message.edit_text(
+        f"Видалено ✅\nВсі {deleted} транзакцій видалено."
+    )
+    await callback.answer()
+
+
+# ── Скасування (будь-який стан Delete) ──────────────────────────────────
+
+@router.callback_query(F.data == "del_cancel", DeleteStates())
 async def delete_cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("Скасовано ❌")

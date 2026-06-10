@@ -49,7 +49,9 @@ TOOLS = [
                     "category_hint": {
                         "type": "string",
                         "description": (
-                            "Transaction category. Choose from available user categories. "
+                            "Transaction category. You MUST copy the value EXACTLY as it appears in the "
+                            "available categories list — same script (Cyrillic vs Latin), same case, "
+                            "character by character. Do NOT transliterate, do NOT mix scripts. "
                             "Default: food, transport, health, shopping, entertainment, utilities, rent, other. "
                             "Custom user categories take priority. Use 'other' only when nothing fits."
                         ),
@@ -86,7 +88,9 @@ class GroqService:
                 "role": "system",
                 "content": (
                     f"Available categories for this user: [{category_list}]. "
-                    "For category_hint you MUST pick a value from this list only. "
+                    "CRITICAL: for category_hint you MUST return the value as a verbatim copy from this list. "
+                    "Copy the exact characters — do NOT change the script (Cyrillic stays Cyrillic, Latin stays Latin), "
+                    "do NOT transliterate, do NOT mix Cyrillic and Latin letters within one word. "
                     "Use your world knowledge to match the item to the most fitting category by meaning. "
                     "Custom categories (those not in the default list) were created by the user "
                     "and likely represent specific spending habits — apply them broadly. "

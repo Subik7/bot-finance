@@ -10,7 +10,7 @@ class TransactionService:
         self.category_service = category_service
         self.groq_service = groq_service
 
-    async def handle_message(self, user_id: int, text: str) -> TransactionModel | None:
+    async def handle_message(self, user_id: int, text: str) -> tuple[TransactionModel, str] | None:
         categories = await self.category_service.get_all_for_user(user_id)
         category_names = [c.name for c in categories]
 
@@ -22,7 +22,7 @@ class TransactionService:
         if isinstance(parsed, ParsedTransaction):
             return await self._create_transaction(user_id, parsed)
 
-    async def _create_transaction(self, user_id: int, parsed: ParsedTransaction) -> TransactionModel:
+    async def _create_transaction(self, user_id: int, parsed: ParsedTransaction) -> tuple[TransactionModel, str]:
         if parsed.amount <= 0:
             raise ValueError(f"Некоректна сума: {parsed.amount}")
 
@@ -37,4 +37,4 @@ class TransactionService:
                 description=parsed.description,
             )
             await self.uow.transactions.add(tx)
-        return tx
+        return tx, category.name
