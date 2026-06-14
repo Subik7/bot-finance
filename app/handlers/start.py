@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
+from handlers.menu import main_reply_keyboard
 
 router = Router()
 
@@ -26,4 +27,5 @@ async def start_handler(message: Message):
         "/delete\\_category — видалити категорію\n"
         "/delete — видалити транзакцію",
         parse_mode="Markdown",
+        reply_markup=main_reply_keyboard(),
     )
