@@ -69,7 +69,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "unknown_request",
-            "description": "Call when message has no number or is not a financial transaction (greetings, questions, random text).",
+            "description": "Call ONLY when message contains ZERO digits. FORBIDDEN if any digit (0-9) is present in the message. Use for greetings, questions, random non-numeric text only.",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },

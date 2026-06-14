@@ -7,20 +7,31 @@ from models.transaction import TransactionModel
 class TransactionRepository(BaseRepository[TransactionModel]):
     model = TransactionModel
 
-    async def get_page(self, user_id: int, offset: int, limit: int) -> list[TransactionModel]:
+    async def get_page(
+        self, user_id: int, offset: int, limit: int,
+        tx_type: str = "all", category_id: int | None = None,
+    ) -> list[TransactionModel]:
+        q = select(TransactionModel).where(TransactionModel.user_id == user_id)
+        if tx_type == "expense":
+            q = q.where(TransactionModel.amount < 0)
+        elif tx_type == "income":
+            q = q.where(TransactionModel.amount > 0)
+        if category_id is not None:
+            q = q.where(TransactionModel.category_id == category_id)
         result = await self.session.execute(
-            select(TransactionModel)
-            .where(TransactionModel.user_id == user_id)
-            .order_by(TransactionModel.created_at.desc())
-            .offset(offset)
-            .limit(limit)
+            q.order_by(TransactionModel.created_at.desc()).offset(offset).limit(limit)
         )
         return result.scalars().all()
 
-    async def count(self, user_id: int) -> int:
-        result = await self.session.execute(
-            select(func.count()).where(TransactionModel.user_id == user_id)
-        )
+    async def count(self, user_id: int, tx_type: str = "all", category_id: int | None = None) -> int:
+        q = select(func.count()).where(TransactionModel.user_id == user_id)
+        if tx_type == "expense":
+            q = q.where(TransactionModel.amount < 0)
+        elif tx_type == "income":
+            q = q.where(TransactionModel.amount > 0)
+        if category_id is not None:
+            q = q.where(TransactionModel.category_id == category_id)
+        result = await self.session.execute(q)
         return result.scalar_one()
 
     async def get_by_id(self, tx_id: int, user_id: int) -> TransactionModel | None:

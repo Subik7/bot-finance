@@ -7,9 +7,19 @@ router = Router()
 
 @router.message(Command("balance"))
 async def balance_handler(message: Message, user, services):
-    summary = await services.analytics_service().text_summary(user.id, "all")
+    analytics = services.analytics_service()
+    total = await analytics.text_summary(user.id, "all")
+    month = await analytics.text_summary(user.id, "month")
+
     await message.answer(
-        f"💰 Баланс: {summary['balance']:.2f} грн\n"
-        f"📈 Доходи: +{summary['income']:.2f} грн\n"
-        f"📉 Витрати: {summary['expense']:.2f} грн"
+        f"💰 *Баланс*\n\n"
+        f"*За цей місяць:*\n"
+        f"📈 Доходи: +{month['income']:.2f} грн\n"
+        f"📉 Витрати: -{month['expense']:.2f} грн\n"
+        f"💵 Баланс: {month['balance']:.2f} грн\n\n"
+        f"*За весь час:*\n"
+        f"📈 Доходи: +{total['income']:.2f} грн\n"
+        f"📉 Витрати: -{total['expense']:.2f} грн\n"
+        f"💵 Баланс: {total['balance']:.2f} грн",
+        parse_mode="Markdown",
     )

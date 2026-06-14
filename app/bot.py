@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from db.session import AsyncSessionLocal, init_db
 from handlers import analytics, category, transaction
-from handlers import balance, delete
+from handlers import balance, delete, start, history
 from middlewares.db import DBSessionMiddleware
 from middlewares.services import ServiceMiddleware
 from middlewares.user import UserMiddleware
@@ -28,6 +28,8 @@ async def main():
     dp.update.middleware(UserMiddleware())
 
     # routers — команди реєструються перед catch-all
+    dp.include_router(start.router)
+    dp.include_router(history.router)
     dp.include_router(analytics.router)
     dp.include_router(category.router)
     dp.include_router(balance.router)
